@@ -10,6 +10,7 @@ namespace Phoenix.AssetImport
     public static class AssetLoader
     {
         public const string ManifestDefaultPath = "Content/asset-manifest.json";
+        public static string ContentBinBaseDirectory = "";
 
         private static readonly Dictionary<string, BinaryModel> _loadedModels = new();
         private static readonly Dictionary<string, BinaryTexture> _loadedTextures = new();
@@ -22,7 +23,7 @@ namespace Phoenix.AssetImport
             GL=gl;
             var manifestPath = Path.Combine(AppContext.BaseDirectory, path);
             _assetManifest = AssetManifestIO.Load(manifestPath);
-
+            ContentBinBaseDirectory = "Content/ContentBin/";
         }
         internal static string AssetAbsolutePath(string name)
         {
@@ -41,7 +42,7 @@ namespace Phoenix.AssetImport
 
             var absolutePath = Path.Combine(
                 AppContext.BaseDirectory,
-                "Content/ContentBin",
+                ContentBinBaseDirectory,
                 relativeBin
             ).Replace('\\', '/');
 
@@ -59,10 +60,8 @@ namespace Phoenix.AssetImport
 
             return model;
         }
-
-        public static BinaryTexture LoadTexture(string name)
+        public static BinaryTexture LoadTextureAbs(string absolutePath)
         {
-            var absolutePath = AssetAbsolutePath(name);
             if (!_loadedTextures.TryGetValue(absolutePath, out var tex))
             {
                 tex = BinaryTextureReader.Load(absolutePath);
@@ -70,6 +69,12 @@ namespace Phoenix.AssetImport
             }
 
             return tex;
+        }
+
+        public static BinaryTexture LoadTexture(string name)
+        {
+            var absolutePath = AssetAbsolutePath(name);
+            return LoadTextureAbs(absolutePath);
         }
 
     }

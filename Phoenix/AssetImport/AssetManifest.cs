@@ -6,8 +6,8 @@ namespace Phoenix.AssetImport
 {
     public sealed class AssetManifest
     {
-        public List<AssetEntry> Assets { get; set; } = new();
         public string BaseDirectory { get; set; } = Directory.GetCurrentDirectory();
+        public List<AssetEntry> Assets { get; set; } = new();
         
     }
 }
