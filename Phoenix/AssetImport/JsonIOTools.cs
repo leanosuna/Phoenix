@@ -5,25 +5,26 @@ using System.Text.Json;
 
 namespace Phoenix.AssetImport
 {
-    public static class AssetManifestIO
+    public static class JsonIOTools
     {
-        public static AssetManifest Load(string path)
+        public static bool Load<T>(string path, out T classFile)
         {
             if (!File.Exists(path))
             {
-                throw new FileNotFoundException($"Asset manifest not found at {path}");
+                classFile = default!;
+                return false;
             }
-            
-            return JsonSerializer.Deserialize<AssetManifest>(
+            classFile = JsonSerializer.Deserialize<T>(
                 File.ReadAllText(path)
             )!;
+            return true;
         }
 
-        public static void Save(string path, AssetManifest manifest)
+        public static void Save<T>(string path, T classFile)
         {
             File.WriteAllText(
                 path,
-                JsonSerializer.Serialize(manifest, new JsonSerializerOptions
+                JsonSerializer.Serialize(classFile, new JsonSerializerOptions
                 {
                     WriteIndented = true
                 })

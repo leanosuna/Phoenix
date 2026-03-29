@@ -1,67 +1,67 @@
-﻿using Phoenix.AssetImport.Model;
-using Phoenix.AssetImport.Texture;
+﻿using Phoenix.Rendering.Geometry.Model;
 using Phoenix.Rendering.Shaders;
+using Phoenix.Rendering.Textures;
 using Silk.NET.OpenGL;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Phoenix.AssetImport
 {
     public static class AssetLoader
     {
-        public const string ManifestDefaultPath = "Content/asset-manifest.json";
+        public const string ContentDefaultPath = "Content/";
+        public const string ManifestDefaultPath = ContentDefaultPath+"asset-manifest.json";
         public static string ContentBinBaseDirectory = "";
 
-        private static readonly Dictionary<string, BinaryModel> _loadedModels = new();
-        private static readonly Dictionary<string, BinaryTexture> _loadedTextures = new();
+        private static readonly Dictionary<string, Model> _loadedModels = new();
+        private static readonly Dictionary<string, GLTexture> _loadedTextures = new();
         private static readonly Dictionary<string, GLShader> _loadedShaders = new();
-
         private static AssetManifest _assetManifest = default!;
-        internal static GL GL = default!;
-        public static void Init(GL gl, string path = ManifestDefaultPath)
-        {
-            GL=gl;
-            var manifestPath = Path.Combine(AppContext.BaseDirectory, path);
-            _assetManifest = AssetManifestIO.Load(manifestPath);
-            ContentBinBaseDirectory = "Content/ContentBin/";
+        private static GL GL = default!;
+        public static void Init(PhoenixGame game, string contentPath = ContentDefaultPath, string manifestPath = ManifestDefaultPath)
+        { 
+            GL = game.GL;
+            var manifestAbsPath = Path.Combine(AppContext.BaseDirectory, manifestPath);
+            
+            if(!JsonIOTools.Load(manifestAbsPath, out AssetManifest manifest))
+                throw new Exception($"Manifest file not found at [{manifestAbsPath}]");
+            
+            _assetManifest = manifest;
+            ContentBinBaseDirectory = contentPath+"ContentBin/";
         }
         
-        public static BinaryModel LoadModel(string name)
+        public static Model LoadModel(string name)
         {
             var absolutePath = AssetAbsolutePath(name);
             if (!_loadedModels.TryGetValue(absolutePath, out var model))
             {
-                model = BinaryModelReader.Load(absolutePath);
+                model = BinaryModelReader.Load(GL, absolutePath);
                 _loadedModels[absolutePath] = model;
             }
 
             return model;
         }
-        public static BinaryTexture LoadTextureAbs(string absolutePath)
+        public static GLTexture LoadTexture(string name)
+        {
+            var absolutePath = AssetAbsolutePath(name);
+            return LoadTextureAbs(absolutePath);
+        }
+        public static GLShader LoadShader(string name)
+        {
+            var path = ShaderAbsolutePath(name);
+            return LoadShaderAbs(path.absVert, path.absFrag);
+        }
+
+        private static GLTexture LoadTextureAbs(string absolutePath)
         {
             if (!_loadedTextures.TryGetValue(absolutePath, out var tex))
             {
-                tex = BinaryTextureReader.Load(absolutePath);
+                tex = BinaryTextureReader.Load(GL, absolutePath);
                 _loadedTextures[absolutePath] = tex;
             }
 
             return tex;
         }
 
-        public static BinaryTexture LoadTexture(string name)
-        {
-            var absolutePath = AssetAbsolutePath(name);
-            return LoadTextureAbs(absolutePath);
-        }
-
-
-        public static GLShader LoadShader(string name)
-        {
-            var path = ShaderAbsolutePath(name);
-            return LoadShaderAbs(path.absVert, path.absFrag);
-        }
-        public static GLShader LoadShaderAbs(string vert, string frag)
+        private static GLShader LoadShaderAbs(string vert, string frag)
         {
             var name = Path.GetFileNameWithoutExtension(vert);
 
@@ -73,7 +73,7 @@ namespace Phoenix.AssetImport
             return shader;
         }
 
-        internal static string AssetAbsolutePath(string name)
+        private static string AssetAbsolutePath(string name)
         {
             var noExt = Path.ChangeExtension(name, null).Replace('\\', '/');
 
@@ -97,7 +97,7 @@ namespace Phoenix.AssetImport
             return absolutePath;
         }
 
-        internal static (string absVert, string absFrag) ShaderAbsolutePath(string name)
+        private static (string absVert, string absFrag) ShaderAbsolutePath(string name)
         {
             var fileName = Path.GetFileNameWithoutExtension(name);
 

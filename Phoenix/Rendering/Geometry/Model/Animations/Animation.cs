@@ -1,12 +1,8 @@
-﻿using Phoenix.Rendering.Animation;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace Phoenix.AssetImport.Model.Animation
+namespace Phoenix.Rendering.Geometry.Model.Animations
 {
-    public class BinaryAnimation
+    public class Animation
     {
         public string Name { get; private set; } = "";
         public float Duration { get; private set; }
@@ -19,7 +15,7 @@ namespace Phoenix.AssetImport.Model.Animation
         private float _randomStartOffset;
         private float _currentTime;
         private int _boneCount;
-        public BinaryAnimation(string name, float duration, float tps, Keyframe[][] keyFrames)
+        public Animation(string name, float duration, float tps, Keyframe[][] keyFrames)
         {
             Name = name;
             Duration = duration;
@@ -43,7 +39,7 @@ namespace Phoenix.AssetImport.Model.Animation
             _currentTime = _randomStartOffset;
         }
 
-        public void UpdateFrameSRT(float deltaTime)
+        public void UpdateFrameTransform(float deltaTime)
         {
             _currentTime += TicksPerSecond * deltaTime;
             _currentTime %= Duration;
@@ -66,7 +62,7 @@ namespace Phoenix.AssetImport.Model.Animation
         }
         public void Update(float deltaTime)
         {
-            UpdateFrameSRT(deltaTime);
+            UpdateFrameTransform(deltaTime);
 
             for (int b = 0; b < _boneCount; b++)
             {

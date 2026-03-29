@@ -1,18 +1,11 @@
-﻿using Phoenix.AssetImport.Model.Animation;
-using Phoenix.Rendering;
-using Phoenix.Rendering.Animation;
-using Phoenix.Rendering.Geometry;
-using Silk.NET.Assimp;
-using System;
-using System.Collections.Generic;
+﻿using Phoenix.Rendering.Geometry.Model.Animations;
 using System.Numerics;
-using System.Text;
 
-namespace Phoenix.AssetImport.Model
+namespace Phoenix.Rendering.Geometry.Model
 {
-    public class BinaryAnimatedModel : BinaryModel
+    public class AnimatedModel : Model
     {
-        public List<BinaryAnimation> Animations { get; internal set; } = default!;
+        public List<Animation> Animations { get; internal set; } = default!;
 
         public AnimatorNode[] AnimatorNodes { get; internal set; } = default!;
 
@@ -23,7 +16,7 @@ namespace Phoenix.AssetImport.Model
 
         private int _selectedAnimation = 0;
 
-        public BinaryAnimatedModel()
+        public AnimatedModel()
         {
             FinalBoneMatrices = new Matrix4x4[BoneCount];
         }

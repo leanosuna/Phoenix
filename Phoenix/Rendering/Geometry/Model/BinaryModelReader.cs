@@ -1,17 +1,14 @@
-﻿using Phoenix.AssetImport.Model.Animation;
-using Phoenix.Rendering;
-using Phoenix.Rendering.Animation;
-using Phoenix.Rendering.Geometry;
-using System.Collections.Generic;
+﻿using Phoenix.AssetImport;
+using Phoenix.Rendering.Geometry.Model.Animations;
+using Silk.NET.OpenGL;
 using System.Numerics;
-using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Runtime.InteropServices;
 
-namespace Phoenix.AssetImport.Model
+namespace Phoenix.Rendering.Geometry.Model
 {
     internal static class BinaryModelReader
     {
-        public static BinaryModel Load(string path)
+        public static Model Load(GL gl, string path)
         {
             using var fs = File.OpenRead(path);
             using var br = new BinaryReader(fs);
@@ -21,16 +18,14 @@ namespace Phoenix.AssetImport.Model
             var isAnimated = br.ReadBoolean();
             
             var partsCount = br.ReadInt32();
-            //Log.Debug($"parts {partsCount}");
-
-            List<BinaryModelPart> parts = new List<BinaryModelPart>();
+            
+            List<ModelPart> parts = new List<ModelPart>();
             for (int p = 0; p < partsCount; p++)
             {
                 var partName = br.ReadString();
                 var meshCount = br.ReadInt32();
-                //Log.Debug($"part {partName}");
-
-                List<BinaryMesh> meshes = new List<BinaryMesh>();
+            
+                List<ModelMesh> meshes = new List<ModelMesh>();
                 for (int m = 0; m < meshCount; m++)
                 {
                     var meshName = br.ReadString();
@@ -42,19 +37,12 @@ namespace Phoenix.AssetImport.Model
                     var verticesLength = br.ReadInt32();
                     var vertices = br.ReadArray<Vertex>(verticesLength);
 
-                    //Log.Debug($"m {meshName}");
                     var tv = vertices[0];
-                    //Log.Debug($"test w{tv.Weights} bid {tv.BoneIds}");
-
-                    //foreach (var v in vertices)
-                    //{
-                    //    Log.Debug($"bid {v.BoneIds.ToStrInt()} w {v.Weights.ToStrF2()}");
-                    //}
-
-                    meshes.Add(new BinaryMesh(meshName, vertices, indices, transform, isAnimated));
+                    
+                    meshes.Add(new ModelMesh(gl, meshName, vertices, indices, transform, isAnimated));
                 }
 
-                parts.Add(new BinaryModelPart(partName, meshes));
+                parts.Add(new ModelPart(partName, meshes));
             }
 
             var hasTextures = br.ReadBoolean();
@@ -66,9 +54,7 @@ namespace Phoenix.AssetImport.Model
                     texList.Add(br.ReadString());
             }
 
-            
-
-            var animations = new List<BinaryAnimation>();
+            var animations = new List<Animation>();
             var animationNodes = new List<AnimatorNode>();
             var igt = Matrix4x4.Identity;
             var boneCount = 0;
@@ -77,7 +63,6 @@ namespace Phoenix.AssetImport.Model
                 igt = br.ReadStruct<Matrix4x4>();
 
                 var nodeCount = br.ReadInt32();
-                //Log.Debug($"nodes {nodeCount}");
                 for (var i = 0; i < nodeCount; i++)
                 {
                     var name = br.ReadString();
@@ -87,9 +72,6 @@ namespace Phoenix.AssetImport.Model
                     var offset = br.ReadStruct<Matrix4x4>();
                     var bindTransform = br.ReadStruct<Matrix4x4>();
                     var transform = br.ReadStruct<Matrix4x4>();
-
-                    var b = isBone ? "B" : "N";
-                    //Log.Debug($"{b} {name} {parentID} {modelBoneID} {offset.ToStrF2()} {bindTransform.ToStrF2()} {transform.ToStrF2()}");
 
                     animationNodes.Add(new AnimatorNode
                     {
@@ -101,25 +83,16 @@ namespace Phoenix.AssetImport.Model
                         BindTransform = bindTransform,
                         Transform = transform
                     });
-                    //..
                 }
-                //PrintFlattened(animationNodes);
-
-
+                
                 var animCount = br.ReadInt32();
                 boneCount = br.ReadInt32();
                 
-                //Log.Debug($"bc {boneCount}");
                 for (var i = 0; i < animCount; i++)
                 {
                     var name = br.ReadString();
                     var duration = br.ReadSingle();
                     var tps = br.ReadSingle();
-
-                    //Log.Debug($"name {name}");
-                    //Log.Debug($"d {duration}");
-                    //Log.Debug($"tps {tps}");
-
 
                     Keyframe[][] keyFrames = new Keyframe[boneCount][];
                     
@@ -128,22 +101,20 @@ namespace Phoenix.AssetImport.Model
                         var keyFramesLen = br.ReadInt32();
                         keyFrames[b] = new Keyframe[keyFramesLen];
 
-                        //Log.Debug($"b{b} kf {keyFramesLen}");
                         for (var k = 0; k < keyFramesLen; k++)
                         {
                             var timeStamp = br.ReadSingle();
                             var srt = br.ReadStruct<TransformStruct>();
 
                             keyFrames[b][k] = new Keyframe(timeStamp, srt.Scale, srt.Rotation, srt.Translation);
-                            //Log.Debug($"b{b} rot {timeStamp} {srt.Rotation.ToStr()}");
                         }
                     }
-                    animations.Add(new BinaryAnimation(name, duration, tps, keyFrames));
+                    animations.Add(new Animation(name, duration, tps, keyFrames));
                 }
             }
 
             return isAnimated? 
-                new BinaryAnimatedModel 
+                new AnimatedModel 
                 {
                     Parts = parts,
                     TextureNames = texList,
@@ -152,7 +123,7 @@ namespace Phoenix.AssetImport.Model
                     AnimatorNodes = animationNodes.ToArray(),
                     InverseGlobalTransform = igt
                 }:
-                new BinaryModel
+                new Model
                 {
                     Parts = parts,
                     TextureNames = texList
@@ -166,23 +137,6 @@ namespace Phoenix.AssetImport.Model
 
             return TabCount(nodes, nodes[node.ParentID]) + 1;
 
-        }
-        private static void PrintFlattened(List<AnimatorNode> animatorNodes)
-        {
-            Log.Debug("[Animation Nodes]");
-            for (var i = 0; i < animatorNodes.Count; i++)
-            {
-                var node = animatorNodes[i];
-                var str = node.IsBone ? "B" : "N";
-                var spc = "";
-                for (var j = 0; j < TabCount(animatorNodes, node); j++)
-                {
-                    spc += "-";
-                }
-                str += $"{i}{spc} PID {node.ParentID}, MID {node.ModelBoneID}, {node.Name}";
-                Log.Debug(str);
-            }
-            Log.Debug("---");
         }
     }
 }

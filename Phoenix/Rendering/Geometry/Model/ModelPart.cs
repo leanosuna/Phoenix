@@ -3,14 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Phoenix.AssetImport.Model
+namespace Phoenix.Rendering.Geometry.Model
 {
-    public class BinaryModelPart
+    public class ModelPart
     {
         public string Name { get; private set; }
-        public List<BinaryMesh> Meshes { get; private set; }
+        public List<ModelMesh> Meshes { get; private set; }
 
-        public BinaryModelPart(string name, List<BinaryMesh> meshes)
+        public ModelPart(string name, List<ModelMesh> meshes)
         {
             Name = name;
             Meshes = meshes;

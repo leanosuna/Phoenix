@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.NetworkInformation;
+﻿using Phoenix.Rendering.Textures;
+using Silk.NET.OpenGL;
 using System.Numerics;
-using System.Text;
 
-namespace Phoenix.AssetImport.Texture
+namespace Phoenix.Rendering.Textures
 {
     internal static class BinaryTextureReader
     {
-        public static BinaryTexture Load(string path)
+        public static GLTexture Load(GL gl, string path)
         {
             using var fs = File.OpenRead(path);
             using var br = new BinaryReader(fs);
@@ -38,7 +36,7 @@ namespace Phoenix.AssetImport.Texture
             }
             var name = Path.GetFileNameWithoutExtension(path);
 
-            return new BinaryTexture(name, wrapS, wrapT, fMin, fMag, format, mipCount, mipSizes, encodedBytes);
+            return new GLTexture(gl, name, wrapS, wrapT, fMin, fMag, format, mipCount, mipSizes, encodedBytes);
         }
     }
 }
