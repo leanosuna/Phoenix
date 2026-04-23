@@ -26,7 +26,7 @@ namespace Phoenix.Framework
         public InputManager InputManager { get; private set; } = default!;
         public FullScreenQuad FullScreenQuad { get; private set; } = default!;
         public Gizmos Gizmos { get; private set; } = default!;
-        public GUIManager GUIManager { get; private set; } = default!;
+        public UI UI { get; private set; } = default!;
         public NetworkManager NetworkManager { get; private set; } = default!;
         public Camera Camera { get; set; } = default!;
         public Graphics Graphics { get; set; } = default!;
@@ -45,7 +45,7 @@ namespace Phoenix.Framework
         {
             var options = WindowOptions.Default;
             options.Size = new Vector2D<int>(1600, 900);
-            options.Title = "Silk.NET OPENGL Game";
+            options.Title = "Phoenix Game";
             options.VSync = true;
 
             var glApi = new APIVersion(4, 1);
@@ -59,7 +59,7 @@ namespace Phoenix.Framework
             Window.Render += InternalRender;
             Window.FramebufferResize += InternalFramebufferResize;
             Window.Closing += InternalOnClose;
-
+             
 
         }
         public PhoenixGame(WindowOptions options)
@@ -157,7 +157,7 @@ namespace Phoenix.Framework
             GL = GL.GetApi(Window);
             
             InputManager = new InputManager(this);
-            GUIManager = new GUIManager(this);
+            UI = new UI(this);
             RTManager = new RTManager(this);
             _sceneRT = RTManager.BuildRT()
                 .SetName("internal-scene")
@@ -210,11 +210,11 @@ namespace Phoenix.Framework
             {
                 if(!_renderingHalt)
                 {
-                    //InputManager.SetTemporaryMouseMode(Silk.NET.Input.CursorMode.Normal)
+                    InputManager.SetTemporaryMouseMode(Silk.NET.Input.CursorMode.Normal);
                 }
                 else
                 {
-                    //InputManager.RestoreMouseMode();
+                    InputManager.RestoreMouseMode();
                 }
                 _renderingHalt = !_renderingHalt;
 
@@ -252,8 +252,8 @@ namespace Phoenix.Framework
         {
             var str = "Loading game assets...";
 
-            GUIManager.DrawCenteredText(str,new Vector2(WindowSize.X / 2, WindowSize.Y / 2), Vector4.One, 30);
-            GUIManager.Render();
+            UI.DrawCenteredText(str,new Vector2(WindowSize.X / 2, WindowSize.Y / 2), Vector4.One, 30);
+            UI.Render();
         }
         double _timerSamplerFPS = 0;
         double _timerSamplerFT = 0;
@@ -282,7 +282,7 @@ namespace Phoenix.Framework
                 InitialLoadScreen();
                 return;
             }
-            GUIManager.Update(deltaTime);
+            UI.Update(deltaTime);
 
             
             if(!_renderingHalt)
@@ -304,7 +304,7 @@ namespace Phoenix.Framework
             InternalRenderUI();
             RenderUI();
 
-            GUIManager.Render();
+            UI.Render();
         }
 
         private void InternalRenderUI()
@@ -316,7 +316,6 @@ namespace Phoenix.Framework
 
         private void InternalFramebufferResize(Vector2D<int> size)
         {
-            Console.WriteLine($"resize detected {size}");
             WindowSize = new Vector2(size.X, size.Y);
             GL.Viewport(size);
             RTManager.HandleWindowResize();
