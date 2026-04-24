@@ -1,4 +1,5 @@
-﻿using Phoenix.Framework.Rendering.RT;
+﻿using Phoenix.Framework.Rendering.GUI;
+using Phoenix.Framework.Rendering.RT;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -187,7 +188,10 @@ namespace Phoenix.Framework.Rendering
         {
             var maxTex = rt.TexturesCount - 1;
             if (srcRTindex < 0 || srcRTindex > maxTex)
-                throw new Exception($"Index {srcRTindex} out of bounds (0-{maxTex}) RT textures");
+            {
+                ErrorListWindow.Add($"Index {srcRTindex} out of bounds (0-{maxTex}) RT textures");
+                return;
+            }
 
             var readBuffer = GLEnum.ColorAttachment0 + srcRTindex;
 
@@ -213,12 +217,17 @@ namespace Phoenix.Framework.Rendering
             var maxTex2 = dest.target.TexturesCount - 1;
 
             if (src.RTindex < 0 || src.RTindex > maxTex)
-                throw new Exception($"Index {src.RTindex} out of bounds (0-{maxTex}) RT textures");
-
+            {
+                ErrorListWindow.Add($"Index {src.RTindex} out of bounds (0-{maxTex}) RT textures");
+                return;
+            }    
+            
             if (dest.RTindex < 0 || dest.RTindex > maxTex2)
-                throw new Exception($"Index {dest.RTindex} out of bounds (0-{maxTex2}) RT textures");
-
-
+            {
+                ErrorListWindow.Add($"Index {dest.RTindex} out of bounds (0-{maxTex2}) RT textures");
+                return;
+            }
+            
             var readBuffer = GLEnum.ColorAttachment0 + src.RTindex;
             var drawBuffer = GLEnum.ColorAttachment0 + dest.RTindex;
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, src.target.FrameBuffer);

@@ -144,7 +144,7 @@ namespace Phoenix.Framework
         private const int ENUM_CURRENT_SETTINGS = -1;
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct Devmode
+        private struct Devmode :IEquatable<Devmode>
         {
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
             public string dmDeviceName;
@@ -178,6 +178,11 @@ namespace Phoenix.Framework
             public int dmReserved2;
             public int dmPanningWidth;
             public int dmPanningHeight;
+
+            public bool Equals(Devmode other)
+            {
+                return false;
+            }
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using ImGuiNET;
+using Riptide;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Phoenix.Framework.Rendering.GUI
@@ -11,11 +13,22 @@ namespace Phoenix.Framework.Rendering.GUI
         private static Dictionary<string, ErrorItem> _errors = new();
         private static UI _ui;
                 
-        public static void Add(string error, float showTimeSeconds = 0)
+        public static void Add(
+            string error,
+            [CallerFilePath] string filePath ="",
+            [CallerLineNumber] int lineNumber = 0,
+            [CallerMemberName] string memberName = "",
+            float showTimeSeconds = 0)
         {
             if(!_errors.TryGetValue(error, out var item))
             {
-                item = new ErrorItem { MaxTime = showTimeSeconds };
+                string fileName = Path.GetFileName(filePath);
+                
+                item = new ErrorItem
+                {
+                    MaxTime = showTimeSeconds,
+                    CallerInfo = $"[{fileName}:{lineNumber}] ({memberName})"
+                };
 
                 _errors.Add(error, item);
             }
@@ -50,7 +63,12 @@ namespace Phoenix.Framework.Rendering.GUI
                     continue;
 
                 var count = val.Count > 1 ? $"({val.Count}) " : "";
+                
                 ImGui.Text($"{count}{item.Key}");
+                if(ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip(item.Value.CallerInfo);
+                }
             }
 
             ImGui.End();

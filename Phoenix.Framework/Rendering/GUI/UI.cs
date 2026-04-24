@@ -44,8 +44,11 @@ namespace Phoenix.Framework.Rendering.GUI
         public unsafe void LoadFontTTF(string path, int[] sizes)
         {
             if (sizes.Length == 0)
-                throw new Exception("must contain at least one font size");
-
+            {
+                ErrorListWindow.Add("must contain at least one font size");
+                return;
+            }
+            
             var io = ImGui.GetIO();
 
             _fonts.Clear();
@@ -83,7 +86,10 @@ namespace Phoenix.Framework.Rendering.GUI
         {
 
             if (!_fonts.TryGetValue(size, out var font))
-                throw new Exception($"font size {size} not found");
+            { 
+                ErrorListWindow.Add($"font size {size} not found");
+                return;
+            }
 
             ImGui.PushFont(font);
         }
