@@ -1,4 +1,5 @@
-﻿using Phoenix.Framework.Rendering.RT;
+﻿using Phoenix.Framework.Rendering.GUI;
+using Phoenix.Framework.Rendering.RT;
 using Silk.NET.OpenGL;
 using System.Numerics;
 using System.Runtime.Intrinsics.X86;
@@ -19,7 +20,7 @@ namespace Phoenix.Framework.Rendering.Textures
         public int WrapT { get; private set; } = default!;
         public int FilterMin { get; private set; } = default!;
         public int FilterMag { get; private set; } = default!;
-
+        public float Anisotropic { get; private set; } = default!;
         public byte Format { get; private set; } = default!;
         public InternalFormat InternalFormat { get; private set; } = default!;
         public int MipCount { get; private set; } = 1;
@@ -153,6 +154,17 @@ namespace Phoenix.Framework.Rendering.Textures
 
             GL.TexParameter(TextureTarget.Texture2D, GLEnum.TextureBaseLevel, 0);
             GL.TexParameter(TextureTarget.Texture2D, GLEnum.TextureMaxLevel, MipCount - 1);
+
+            if(Anisotropic >= 0)
+            {
+                float maxAnisotropic = Anisotropic;
+                if (maxAnisotropic == 0)
+                {
+                    GL.GetFloat(GLEnum.MaxTextureMaxAnisotropy, out maxAnisotropic);
+                }
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxAnisotropy, maxAnisotropic);
+            }
+
         }
     }
 }
