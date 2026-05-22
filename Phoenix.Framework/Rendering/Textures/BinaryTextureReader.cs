@@ -18,7 +18,7 @@ namespace Phoenix.Framework.Rendering.Textures
             var wrapT = br.ReadInt32();
             var fMin = br.ReadInt32();
             var fMag = br.ReadInt32();
-
+            var anisotropic = br.ReadSingle();
             var format = br.ReadByte();
             var mipCount = br.ReadInt32();
 
@@ -36,7 +36,7 @@ namespace Phoenix.Framework.Rendering.Textures
             }
             var name = Path.GetFileNameWithoutExtension(path);
 
-            return new GLTexture(gl, name, wrapS, wrapT, fMin, fMag, format, mipCount, mipSizes, encodedBytes);
+            return new GLTexture(gl, name, wrapS, wrapT, fMin, fMag, anisotropic, format, mipCount, mipSizes, encodedBytes);
         }
     }
 }

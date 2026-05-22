@@ -29,7 +29,7 @@ namespace Phoenix.Framework.Rendering.Textures
 
         private GL GL;
 
-        public GLTexture(GL gl, string name, int wrapS, int wrapT, int fMin, int fMag, 
+        public GLTexture(GL gl, string name, int wrapS, int wrapT, int fMin, int fMag, float anisotropic,
             byte format, int mipCount, Vector2[] mipSizes, byte[][] encodedBytes)
         {
             GL = gl;
@@ -38,6 +38,7 @@ namespace Phoenix.Framework.Rendering.Textures
             WrapT = wrapT;
             FilterMin = fMin;
             FilterMag = fMag;
+            Anisotropic = anisotropic;
             Format = format;
             MipCount = mipCount;
             MipSizes = mipSizes;
