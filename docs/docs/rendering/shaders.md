@@ -1,195 +1,79 @@
 # Shaders
 
-`GLShader` compiles and manages OpenGL shader programs (vertex + fragment).
+The [AssetTool](../asset-pipeline/asset-tool.md) compiles and verifies Shaders and copy them to the ContentBin directory.  
+Interacting with shaders is done via ShaderHelper classes.
 
-## Creating a Shader
+## ShaderHelper class
 
-### From Path (auto-finds .vert + .frag)
+On sucessfull build, the [AssetTool](../asset-pipeline/asset-tool.md) generates a child class of ShaderHelper combining Shader + name of your shader  
+You're able to customize the namespace on the class [asset manifest](../asset-pipeline/loading.md#asset manifest)  
 
+Both the parent, and any child class generated are declared ```partial``` so you are able to extend them as you see fit.
+
+The API of this abstract class includes:
 ```csharp
-var shader = new GLShader(gl, "shaders/pbr");
-// Looks for: "shaders/pbr.vert" and "shaders/pbr.frag"
+public void Use() // Set this shader as the current OpenGL program
+        
+public void AttachUBO(
+    uint bufferHandle, 
+    string uniformBlockName, 
+    uint binding = 0) //Used for Uniform Buffer Objects
+        
+public void Dispose() 
+        
 ```
+ShaderUniform Properties are added to the child class for each uniform found on your shader at compile time.  
+With this approach, uniforms optimized out of shaders don't get generated, which causes C# compilation to fail
+when trying to access these properties preventing runtime uniform not found errors.
 
-### Explicit Stages
+## ShaderUniform <T\>
 
+This class allows type checking of a shader uniform using a common Set(T value)  
+
+
+## ShaderTextureUniform
+
+This class allows binding a texture and using it in a shader
+
+
+## Example ShaderHelper for a BasicModel.vert and BasicModel.frag shader pair.
 ```csharp
-var shader = new GLShader(gl,
-    "shaders/post-process.vert",
-    "shaders/post-process.frag"
-);
-```
+using System.Numerics;
+using Phoenix.Framework.Rendering.Shaders;
+using Phoenix.Framework.AssetImport;
 
-### Ignore Missing Uniforms
-
-If some uniforms may not exist (e.g., optional features), suppress errors:
-
-```csharp
-var shader = new GLShader(gl, "shaders/pbr", ignoreUniformsNotFound: true);
-```
-
-## Activating
-
-```csharp
-shader.SetAsCurrentGLProgram();
-// ... draw calls ...
-shader.SetAsCurrentGLProgram();  // No-op if already active
-```
-
-Check if it is currently active:
-
-```csharp
-bool isActive = shader.IsCurrent();
-```
-
-## Uniforms
-
-### Setting a Uniform by Location
-
-```csharp
-int loc = shader.GetUniformLocation("uDiffuseMap");
-shader.SetUniform(loc, someTextureHandle);
-```
-
-### Setting a Uniform by Name
-
-```csharp
-shader.SetUniform("uView", cameraViewMatrix);
-shader.SetUniform("uProjection", cameraProjectionMatrix);
-shader.SetUniform("uTime", (float)Graphics.Time);
-shader.SetUniform("uOpacity", 0.75f);
-shader.SetUniform("uColor", new Vector4(1f, 0f, 0f, 1f));
-shader.SetUniform("uPosition", new Vector3(0, 1, 0));
-shader.SetUniform("uScale", new Vector2(2f, 2f));
-shader.SetUniform("uModelMatrix", modelMatrix);
-```
-
-### Arrays
-
-```csharp
-// Array of vectors
-shader.SetUniform("uBoneMatrices", boneMatrices);  // Matrix4x4[]
-
-// Array of floats
-shader.SetUniform("uWeights", weights);  // float[]
-
-// Array of vectors
-shader.SetUniform("uColors", colors);  // Vector4[]
-```
-
-### Texture Uniforms
-
-```csharp
-// By texture handle and slot
-shader.SetTextureUniform("uAlbedo", textureHandle, slot: 0);
-
-// By GLTexture object
-shader.SetTextureUniform("uNormal", albedoTexture, slot: 0);
-
-// In GLSL:
-// uniform sampler2D uAlbedo;
-// vec4 color = texture(uAlbedo, uv);
-```
-
-## UBO (Uniform Buffer Object)
-
-Attach the CommonUBO or a custom UBO for bulk uniform data:
-
-```csharp
-shader.AttachUBO(commonUboHandle, "CommonData", binding: 0);
-```
-
-### CommonUBO GLSL Layout
-
-```glsl
-layout(std140) uniform CommonData {
-    mat4 sView;           // layout(location = 0)
-    mat4 sProjection;     // layout(location = 1)
-    float sTime;          // layout(location = 2)
-    float sDeltaTime;     // layout(location = 3)
-};
-```
-
-This is updated automatically every frame by `PhoenixGame` with the current camera view/projection and timing.
-
-## Error Handling
-
-If a uniform name is not found in the shader, an error is added to [`ErrorListWindow`](../utilities/logging.md):
-
-```
-Could not find uniform: "uSomeUniform" in shader "shaders/pbr"
-```
-
-Set `ignoreUniformsNotFound: true` on construction to suppress these.
-
-## Disposal
-
-```csharp
-shader.Dispose();  // Deletes GL program handle
-```
-
-## GLSL Shader Templates
-
-### Standard PBR Vertex Shader
-
-```glsl
-#version 330 core
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aTexCoord;
-layout(location = 3) in vec4 aBoneIds;
-layout(location = 4) in vec4 aBoneWeights;
-
-uniform mat4 sView;
-uniform mat4 sProjection;
-uniform mat4 boneMatrices[20];
-
-out vec3 vNormal;
-out vec2 vTexCoord;
-out vec3 vWorldPos;
-
-void main()
+namespace Phoenix.Framework.ShaderHelpers
 {
-    vec4 skinPos = vec4(aPosition, 1.0);
-    for (int i = 0; i < 4; i++)
-    {
-        skinPos += boneMatrices[int(aBoneIds[i] * 255)][i] * aBoneWeights[i] * skinPos;
-    }
-    gl_Position = sProjection * sView * skinPos;
-    vNormal = aNormal;
-    vTexCoord = aTexCoord;
-    vWorldPos = skinPos.xyz;
+	public partial class ShaderBasicModel : ShaderHelper
+	{
+		public ShaderUniform<Vector3> CameraPosition {get; private set;}
+		public ShaderUniform<float> KA {get; private set;}
+		public ShaderUniform<float> KD {get; private set;}
+		public ShaderUniform<float> KS {get; private set;}
+		public ShaderUniform<Vector3> LightColor {get; private set;}
+		public ShaderUniform<Vector3> LightPosition {get; private set;}
+		public ShaderTextureUniform TexColor {get; private set;}
+		public ShaderUniform<Matrix4x4> World {get; private set;}
+
+		public ShaderBasicModel()
+		{
+			_shader = AssetLoader.LoadShader("Shaders/basicModel/basicModel");
+
+			CameraPosition = new ShaderUniform<Vector3>(_shader, "CameraPosition");
+			KA = new ShaderUniform<float>(_shader, "KA");
+			KD = new ShaderUniform<float>(_shader, "KD");
+			KS = new ShaderUniform<float>(_shader, "KS");
+			LightColor = new ShaderUniform<Vector3>(_shader, "LightColor");
+			LightPosition = new ShaderUniform<Vector3>(_shader, "LightPosition");
+			TexColor = new ShaderTextureUniform(_shader, "TexColor", 0);
+			World = new ShaderUniform<Matrix4x4>(_shader, "World");
+		}
+	}
 }
 ```
 
-### Standard PBR Fragment Shader
 
-```glsl
-#version 330 core
-in vec3 vNormal;
-in vec2 vTexCoord;
-in vec3 vWorldPos;
 
-uniform sampler2D uAlbedo;
-uniform sampler2D uNormal;
-uniform sampler2D uMetallicRoughness;
-uniform vec3 uCameraPos;
-
-out vec4 fragColor;
-
-void main()
-{
-    vec3 albedo = texture(uAlbedo, vTexCoord).rgb;
-    vec3 normal = texture(uNormal, vTexCoord).rgb * 2.0 - 1.0;
-    float metallic = texture(uMetallicRoughness, vTexCoord).r;
-    float roughness = texture(uMetallicRoughness, vTexCoord).g;
-
-    vec3 N = normalize(normal);
-    vec3 V = normalize(uCameraPos - vWorldPos);
-
-    fragColor = vec4(albedo, 1.0);
-}
-```
 
 ## See Also
 

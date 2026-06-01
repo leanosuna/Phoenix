@@ -41,7 +41,6 @@ PhoenixGame
  └── AssetLoader ───► Cached models, textures, shaders
 ```
 
-Renders to `_sceneRT`, then blits to screen. UI renders on top
 ## See Also
 
 - [Getting Started](getting-started.md) — project setup and first game

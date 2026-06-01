@@ -4,7 +4,7 @@ Phoenix integrates ImGui for overlay rendering, plus a custom text-drawing syste
 
 ## UI System
 
-The `UI` class is automatically created by `PhoenixGame`. Access it via `this.UI`.
+The `UI` class is automatically created by `PhoenixGame`.
 
 ### Drawing Text
 
@@ -56,7 +56,7 @@ UI.DrawSimpleButton("Click Me", new Vector2(100, 100), new Vector2(120, 40), () 
 
 ### Custom ImGui
 
-Full ImGui is available through the `ImGuiController` behind the scenes. Use `RenderUI()` override:
+Full `ImGui` access is available through its static class. inside a `RenderUI()` override:
 
 ```csharp
 protected override void RenderUI()
@@ -71,7 +71,7 @@ protected override void RenderUI()
 
 ### Font Management
 
-Phoenix loads Cascadia Mono at sizes 10-100 in 5px steps by default. Load additional fonts:
+Phoenix loads Cascadia Mono at sizes 10-100 in 1px steps by default. Load additional fonts:
 
 ```csharp
 // Load a custom TTF font
@@ -84,11 +84,9 @@ UI.DrawText("Large text", new Vector2(100, 100), Vector4.One, 24);
 
 ## ErrorListWindow
 
-Centralized error reporting from all framework subsystems. Errors are displayed as an overlay and logged.
-
-### Showing Errors
-
-Errors are automatically added by the framework (shader errors, audio errors, etc.). You can add your own:
+Centralized error reporting from all framework subsystems and you, the user. Errors are displayed as an overlay and logged.  
+Useful for errors that may not be critical, but helpful to be seen at runtime.  
+Goes well together with [rendering halt](../../core/game#rendering-halt), as UI is always kept active.
 
 ```csharp
 // Add with caller info (auto-filled by compiler attributes)
@@ -115,17 +113,7 @@ Each error shows:
    at MyGame.Render() in C:\projects\MyGame\MyGame.cs:42
 ```
 
-## UI Rendering Order
 
-UI rendering happens after the main scene:
-
-```
-1. UI.Update(dt)           — ImGui controller update
-2. SetRenderToScreen()     — Blit scene to window
-3. ClearRenderTarget()     — Clear for overlay
-4. UI.Render()             — ImGui + ErrorListWindow
-5. RenderUI(dt)            — User's ImGui code
-```
 
 ## See Also
 

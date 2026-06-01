@@ -15,33 +15,18 @@ var input = InputManager;  // or: this.InputManager
 ### Key State Queries
 
 ```csharp
-// Is the key currently held down?
-if (InputManager.KeyDown(Key.Space))
+// Is the key currently held down this frame?
+if (InputManager.KeyDown(Key.W))
 {
-    // Jump
+    // Move forward
 }
 
-// Was the key pressed exactly this frame? (edge-detect)
+// Fires only the first frame a key is down, 
+// Resets when releasing it.
 if (InputManager.KeyDownOnce(Key.E))
 {
-    // Interact — fires once per press
-}
-```
-
-### Example: Toggle System
-
-```csharp
-protected override void Update(double dt)
-{
-    if (InputManager.KeyDownOnce(Key.Escape))
-    {
-        InputManager.ToggleMouseMode();
-    }
-
-    if (InputManager.KeyDown(Key.W))
-    {
-        // Move forward
-    }
+    // Toggle something...
+    InputManager.ToggleMouseMode();
 }
 ```
 
@@ -138,7 +123,7 @@ protected override void Update(double dt)
 - `KeyDownOnce()` returns `true` only on the frame the key is first pressed (edge detection).
 - `MouseDelta` is accumulated from the `OnMouseMove` event and reset each `Update()`.
 - `MouseWheelValue` is reset each frame after being read.
-- The static `keysDown` list tracks which keys have been seen and is cleared each frame.
+- `keysDown` list tracks which keys have been pressed / released each frame.
 
 ## See Also
 

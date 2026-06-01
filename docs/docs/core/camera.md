@@ -119,15 +119,16 @@ This processes:
 The camera's `View` and `Projection` matrices are automatically fed into the `CommonUBO` every frame. Shaders that need camera data bind this UBO:
 
 ```csharp
-// In your shader's vertex shader:
-// layout(std140) uniform CommonData {
-//     mat4 sView;
-//     mat4 sProjection;
-//     float sTime;
-//     float sDeltaTime;
-// };
+// In your shader:
+layout(std140) uniform CommonData
+{
+    mat4 sView;
+    mat4 sProjection;
+    float sTime;
+    float sDeltaTime;
+};
 
-// gl_Position = sProjection * sView * modelMatrix * aPosition;
+// gl_Position = sProjection * sView * World * vPosition;
 ```
 
 ## Custom Camera
